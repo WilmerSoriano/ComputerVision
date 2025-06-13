@@ -12,28 +12,32 @@ def rgb_to_hsv(img):
    img_arry = img_arry/255.0
 
    # Value
-   V = np.max(img, axis=2)
+   V = np.max(img_arry, axis=2)
    # Chroma
-   C = V - np.min(img, axis=2)
+   C = V - np.min(img_arry, axis=2)
    # Saturation
-   if V != 0:
-      S = C/V
-   else:
-      S = 0
+   # Numpy version of any condition if/else: ex: where(condition, X, Y)
+   S = np.where(V != 0, C/V, 0.0)
    
-   r, g, b = rgb_img[..., 0], rgb_img[..., 1], rgb_img[..., 2]
-   # Hue
-   H = 0
-   if V.all == r:
-      H = ((g-b)/C)%6
-   elif V.all == g:
-      H = ((b-r)/C)+2
-   elif V.all == b:
-      H = ((r-g)/C)+4 
-   Hue = H * 60.0
-   hsv = np.stack([Hue, S, V], axis=2)
+   # Grab all RGB channel into 2D array
+   r, g, b = img_arry[..., 0], img_arry[..., 1], img_arry[..., 2]
 
-def hvs_to_rgb(img, hue, sat, val):
+   # Hue piecewise function, and ignore divide by Zero warnings
+   with np.errstate(divide='ignore', invalid='ignore'):
+      H = np.where(C == 0, 0.0,
+                  np.where(V == r, (np.divide((g-b), C)) % 6, 
+                  np.where(V == g, (np.divide((b-r), C)) +2,
+                  np.where(V == b, (np.divide((r-g), C)) +4, 0.0)))
+                  )
+
+   # Convert into degree
+   H = (H * 60.0) % 360.0
+
+   hsv = np.stack([H, S, V], axis=2)
+
+   return hsv
+
+def hvs_to_rgb(img, hue):
    
    # chrome = VxS
    C = val*sat
@@ -63,5 +67,10 @@ if __name__ =="__main__":
 
    # 2. Read the image from the path
    img = Image.open(img_path)
-   rgb_to_hsv(img, hue, sat, val)
-   #hvs_to_rgb(img, hue, sat, val)
+
+   hsv = rgb_to_hsv(img)
+   hsv[..., 0] = (hsv[..., 0] + hue) % 360.0
+   hsv[..., 1] = np.clip(hsv[..., 1] * sat, 0.0, 1.0)
+   hsv[..., 2] = np.clip(hsv[..., 2] * val, 0.0, 1.0)
+
+   hvs_to_rgb(img,hsv)
