@@ -1,4 +1,3 @@
-import os
 import sys
 
 import numpy as np
@@ -82,18 +81,16 @@ def hvs_to_rgb(hsv_img):
    six = (5 <= Hn) & (Hn < 6)
    Rn[six], Bn[six] = C[six], X[six]
 
-
    # Final RGB value needed
    m = V - C
 
-   # Now convert image back to RGB and all values back to range [0,255] for computer to read image no more [0,1]
+   # Now convert image back to RGB and all values back to range [0,255] for computer to read image; no more [0,1]
    R,G,B = ((Rn+m)*255,(Gn+m)*255, (Bn+m)*255)
 
    newRGB = np.stack([R,G,B], axis=2)
    # np.clip => Ensures all new RGB values are within 0 and 255, if less then 0, make it 0. Greater then 255, make it 255
    newRGB = np.clip(newRGB, 0, 255).astype(np.uint8)
    new_img = Image.fromarray(newRGB, 'RGB')
-
 
    new_img.save("output.jpg")
    print("New image completed, check it out!")
