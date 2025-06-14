@@ -63,6 +63,7 @@ def hvs_to_rgb(hsv_img):
    Gn = np.zeros_like(H)
    Bn = np.zeros_like(H)
 
+   # Perform the piecewise function for the appropriate R,G, or B values only
    ones = (0 <= Hn) & (Hn < 1)
    Rn[ones], Gn[ones] = C[ones],X[ones]
    
@@ -85,19 +86,16 @@ def hvs_to_rgb(hsv_img):
    # Final RGB value needed
    m = V - C
 
-   # Now convert image back to RGB
-   R,G,B = (Rn+m, Gn+m, Bn+m)
+   # Now convert image back to RGB and all values back to range [0,255] for computer to read image no more [0,1]
+   R,G,B = ((Rn+m)*255,(Gn+m)*255, (Bn+m)*255)
 
    newRGB = np.stack([R,G,B], axis=2)
+   # np.clip => Ensures all new RGB values are within 0 and 255, if less then 0, make it 0. Greater then 255, make it 255
    newRGB = np.clip(newRGB, 0, 255).astype(np.uint8)
    new_img = Image.fromarray(newRGB, 'RGB')
 
-   dir = "new_Img"
-   if not os.path.exists(dir):
-      os.makedirs(dir)
 
-   image_path = os.path.join(dir, "output.jpg")
-   new_img.save(image_path)
+   new_img.save("output.jpg")
    print("New image completed, check it out!")
 
 # 1. First verify user argument are valid
