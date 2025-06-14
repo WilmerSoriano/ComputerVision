@@ -1,3 +1,4 @@
+import os
 import sys
 
 import numpy as np
@@ -47,29 +48,57 @@ def rgb_to_hsv(img):
    return hsv
  
 # 5. Now convert image back to RGB. 
-def hvs_to_rgb(og_img, hsv_img):
+def hvs_to_rgb(hsv_img):
    # split HSV 
    H,S,V = hsv_img[..., 0], hsv_img[..., 1], hsv_img[..., 2]
    #Chrome
    C = V*S
    # Hue into 1 of 6 values
-   Hn = (H/60.0) % 360.0
+   Hn = H/60.0
    # X, is the 2nd largets component of color
-   X = C *(1-Hn%(2-1))
+   X = C * (1 - np.abs(Hn % (2 - 1)))
 
-   Rn,Gn,Bn = np.where( 0 <= Hn < 1, (C,X,0),
-                  np.where(1 <= Hn < 2, (X, C, 0), 
-                  np.where(2 <= Hn < 3, (0, C, X),
-                  np.where(3 <= Hn < 4, (0, X, C),
-                  np.where(4 <= Hn < 5, (X, 0, C),
-                  np.where(5 <= Hn < 6, (C, 0, X),)))))
-                  )
+   # Declare all RGB array with zero float just like H just to be safe
+   Rn = np.zeros_like(H)
+   Gn = np.zeros_like(H)
+   Bn = np.zeros_like(H)
+
+   ones = (0 <= Hn) & (Hn < 1)
+   Rn[ones], Gn[ones] = C[ones],X[ones]
+   
+   twos = (1 <= Hn) & (Hn < 2)
+   Rn[twos], Gn[twos] = X[twos], C[twos]
+
+   threes = (2 <= Hn) & (Hn < 3)
+   Gn[threes], Bn[threes] = C[threes], X[threes]
+
+   fours = (3 <= Hn) & (Hn < 4)
+   Gn[fours], Bn[fours] = X[fours], C[fours]
+
+   fives = (4 <= Hn) & (Hn < 5)
+   Rn[fives], Bn[fives] = X[fives], C[fives]
+
+   six = (5 <= Hn) & (Hn < 6)
+   Rn[six], Bn[six] = C[six], X[six]
+
+
    # Final RGB value needed
    m = V - C
 
    # Now convert image back to RGB
    R,G,B = (Rn+m, Gn+m, Bn+m)
-   """return APPLY RGB to image!!!"""
+
+   newRGB = np.stack([R,G,B], axis=2)
+   newRGB = np.clip(newRGB, 0, 255).astype(np.uint8)
+   new_img = Image.fromarray(newRGB, 'RGB')
+
+   dir = "new_Img"
+   if not os.path.exists(dir):
+      os.makedirs(dir)
+
+   image_path = os.path.join(dir, "output.jpg")
+   new_img.save(image_path)
+   print("New image completed, check it out!")
 
 # 1. First verify user argument are valid
 def verify(hue, sat, val):
@@ -83,7 +112,7 @@ def verify(hue, sat, val):
     
 if __name__ =="__main__":
    img_path = sys.argv[1]
-   hue = int(sys.argv[2])
+   hue = float(sys.argv[2])
    sat = float(sys.argv[3])
    val = float(sys.argv[4])
    
@@ -97,8 +126,9 @@ if __name__ =="__main__":
 
    # 4. Apply the user input for HSV
    hsv = rgb_to_hsv(img)
+
    hsv[..., 0] = (hsv[..., 0] + hue) % 360.0
    hsv[..., 1] = np.clip(hsv[..., 1] * sat, 0.0, 1.0)
    hsv[..., 2] = np.clip(hsv[..., 2] * val, 0.0, 1.0)
 
-   hvs_to_rgb(img, hsv)
+   hvs_to_rgb(hsv)
