@@ -92,7 +92,7 @@ def hvs_to_rgb(hsv_img):
    newRGB = np.clip(newRGB, 0, 255).astype(np.uint8)
    new_img = Image.fromarray(newRGB, 'RGB')
 
-   new_img.save("output.jpg")
+   new_img.save("HSV_output.jpg")
    print("New image completed, check it out!")
 
 # 1. First verify user argument are valid
