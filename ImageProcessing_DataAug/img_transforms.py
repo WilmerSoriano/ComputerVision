@@ -27,33 +27,38 @@ def random_crop(img, S):
    return img[top_bottom : top_bottom + S, left_right : left_right + S]
 
 """Patch Extraction"""
-def extract_patch(img):
-   # non-overlapping patches of size 8
-   size = 8
-   H, W,_ = img.shape
-   shape = [H // size, W // size] + [size, size]
-
+def extract_patch(img, num_patches):
+   size = num_patches
+   H, W, _= img.shape
+   shape = [H // size, W // size, size, size, 3]
+   
    # (row, col, patch_row, patch_col)
-   strides = [size * s for s in img.strides] + list(img.strides)
+   strides = [size * s for s in img.strides[:2]] + list(img.strides)
    # extract patches
    patches = stride_tricks.as_strided(img, shape=shape, strides=strides)
+
    return patches
 
+"""Resizing"""
+def resize_img(img, factor):
    
 if __name__ == "__main__":
 
    img = Image.open("original.jpg")
    
    # 1st. Random Cropping
-   img_arry = np.array(img)
+   img_a = np.array(img)
    S = 200
-   crop_img = random_crop(img_arry, S)
+   crop_img = random_crop(img_a, S)
    
    new_img = Image.fromarray(crop_img)
-   #new_img.save("crop_Img.jpg")
+   new_img.save("crop_Img.jpg")
 
    # 2nd. Patch Extraction
-   patch_img = extract_patch(img_arry)
-      
-   new_img = Image.fromarray(patch_img)
-   new_img.save("patch_Img.jpg")
+   img_b = np.array(img)
+   num_patches = 8
+   patch_array = extract_patch(img_b, num_patches)
+
+   # 3rd. Resizing
+   img_c = np.array(img)
+
