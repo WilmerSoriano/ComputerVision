@@ -49,7 +49,7 @@ def rgb_to_hsv(img):
    return hsv
  
 # 5. Now convert image back to RGB. 
-def hvs_to_rgb(hsv_img):
+def hsv_to_rgb(hsv_img):
    # split HSV 
    H,S,V = hsv_img[..., 0], hsv_img[..., 1], hsv_img[..., 2]
    #Chrome
@@ -128,4 +128,4 @@ if __name__ =="__main__":
    hsv[..., 1] = np.clip(hsv[..., 1] * sat, 0.0, 1.0)
    hsv[..., 2] = np.clip(hsv[..., 2] * val, 0.0, 1.0)
 
-   hvs_to_rgb(hsv)
+   hsv_to_rgb(hsv)
