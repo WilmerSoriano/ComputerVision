@@ -25,8 +25,10 @@ def rgb_to_hsv(img):
    # Chroma
    C = V - np.min(img_arry, axis=2)
    # Saturation
-   # Numpy version of any condition if/else: ex: where(condition, X, Y)
-   S = np.where(V != 0, C/V, 0.0)
+   # Only perform the divioson for Index who do not have zeros.
+   S = np.zeros_like(V)
+   non_zero = V != 0
+   S[non_zero] = C[non_zero] / V[non_zero]
    
    # Grab all RGB channel into 2D array
    r, g, b = img_arry[..., 0], img_arry[..., 1], img_arry[..., 2]
