@@ -8,7 +8,7 @@ def random_crop(img, S):
    width,height,_ = img.shape
 
    # Check Size is valid value
-   if not 0 < S or not S <= min(width,height):
+   if not 0 < S or not S < min(width,height):
       print("Inavlid Size")
       return 0
    
@@ -41,24 +41,39 @@ def extract_patch(img, num_patches):
 
 """Resizing"""
 def resize_img(img, factor):
+   img_resized = np.repeat(np.repeat(img, factor, axis=0), factor, axis=1)
+   return img_resized
    
 if __name__ == "__main__":
 
    img = Image.open("original.jpg")
    
    # 1st. Random Cropping
+   print("============================")
    img_a = np.array(img)
+   print("Original shape:", img_a.shape)
    S = 200
    crop_img = random_crop(img_a, S)
+   print("Crop Image shape:", crop_img.shape)
    
    new_img = Image.fromarray(crop_img)
    new_img.save("crop_Img.jpg")
 
    # 2nd. Patch Extraction
+   print("============================")
    img_b = np.array(img)
+   print("Original shape:", img_b.shape)
    num_patches = 8
    patch_array = extract_patch(img_b, num_patches)
+   print("Extracting Patch Image shape:", patch_array.shape)
 
    # 3rd. Resizing
+   print("============================")
    img_c = np.array(img)
+   print("Original shape:", img_c.shape)
+   factor = 4
+   re_array = resize_img(img_c, factor)
+   print("Resized Image shape:", re_array.shape)
+   new_img = Image.fromarray(re_array)
+   new_img.save("resized_Img.jpg")
 
