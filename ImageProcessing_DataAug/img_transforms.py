@@ -1,3 +1,4 @@
+import color_space_test as cst
 import numpy as np
 from numpy.lib import stride_tricks
 from PIL import Image
@@ -41,8 +42,24 @@ def extract_patch(img, num_patches):
 
 """Resizing"""
 def resize_img(img, factor):
-   img_resized = np.repeat(np.repeat(img, factor, axis=0), factor, axis=1)
-   return img_resized
+   # From original image, repeat each row and column and multiply by the factor such as (h*factor and w*factor)
+   return np.repeat(np.repeat(img, factor, axis=0), factor, axis=1)
+
+"""Color Jitter"""
+def color_jitter(img, hue, saturation, value):
+   # Randomly chose a value between given HSV and for Sat & Val limit between 0 and 1
+   rand_hue = np.random.uniform(0, hue)
+   rand_sat = np.random.uniform(0, saturation)
+   rand_val = np.random.uniform(0, value)
+
+   hsv = cst.rgb_to_hsv(img)
+   
+   hsv[..., 0] = (hsv[..., 0] + rand_hue) % 360.0
+   hsv[..., 1] = np.clip(hsv[..., 1] * rand_sat, 0.0, 1.0)
+   hsv[..., 2] = np.clip(hsv[..., 2] * rand_val, 0.0, 1.0)
+   print(f"jitter HSV color:")
+
+   return cst.hsv_to_rgb(hsv)
    
 if __name__ == "__main__":
 
@@ -77,3 +94,10 @@ if __name__ == "__main__":
    new_img = Image.fromarray(re_array)
    new_img.save("resized_Img.jpg")
 
+   # 4th. Color Jitter
+   print("============================")
+   print("Original RGB color:")
+   hue = 100
+   saturation = 1 
+   value = 1
+   color_jitter(img, hue, saturation, value)
