@@ -47,7 +47,7 @@ def resize_img(img, factor):
 
 """Color Jitter"""
 def color_jitter(img, hue, saturation, value):
-   # Randomly chose a value between given HSV and for Sat & Val limit between 0 and 1
+   # Randomly chose a value between given HSV and for Sat & Val limit between 0 and input
    rand_hue = np.random.uniform(0, hue)
    rand_sat = np.random.uniform(0, saturation)
    rand_val = np.random.uniform(0, value)
