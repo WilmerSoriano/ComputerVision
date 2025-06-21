@@ -92,10 +92,7 @@ def hsv_to_rgb(hsv_img):
    newRGB = np.stack([R,G,B], axis=2)
    # np.clip => Ensures all new RGB values are within 0 and 255, if less then 0, make it 0. Greater then 255, make it 255
    newRGB = np.clip(newRGB, 0, 255).astype(np.uint8)
-   new_img = Image.fromarray(newRGB, 'RGB')
-
-   new_img.save("HSV_output.jpg")
-   print("New image completed, check it out!")
+   return newRGB
 
 # 1. First verify user argument are valid
 def verify(hue, sat, val):
@@ -128,4 +125,9 @@ if __name__ =="__main__":
    hsv[..., 1] = np.clip(hsv[..., 1] * sat, 0.0, 1.0)
    hsv[..., 2] = np.clip(hsv[..., 2] * val, 0.0, 1.0)
 
-   hsv_to_rgb(hsv)
+   newRGB = hsv_to_rgb(hsv)
+
+   new_img = Image.fromarray(newRGB, 'RGB')
+
+   new_img.save("HSV_output.jpg")
+   print("New image completed, check it out!")
