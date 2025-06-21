@@ -1,7 +1,8 @@
-import color_space_test as cst
 import numpy as np
 from numpy.lib import stride_tricks
 from PIL import Image
+
+import color_space_test as cst
 
 """Random Cropping images"""
 def random_crop(img, S):
@@ -57,7 +58,7 @@ def color_jitter(img, hue, saturation, value):
    hsv[..., 0] = (hsv[..., 0] + rand_hue) % 360.0
    hsv[..., 1] = np.clip(hsv[..., 1] * rand_sat, 0.0, 1.0)
    hsv[..., 2] = np.clip(hsv[..., 2] * rand_val, 0.0, 1.0)
-   print(f"jitter HSV color:")
+   print("jitter HSV color:", hsv[0,0])
 
    return cst.hsv_to_rgb(hsv)
    
