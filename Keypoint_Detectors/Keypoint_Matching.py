@@ -36,7 +36,7 @@ def keypoint_match(descriptors_dst, descriptors_src):
     ratio = 0.75
     matches = []
     # Before we perform the ratio test, we need the minimum euclidean distance from nearest neighbors for best candidate match for each keypoint.
-    best_distance = cdist(descriptors1, descriptors2, 'euclidean')
+    best_distance = cdist(descriptors_dst, descriptors_src, 'euclidean')
 
     # Now we can perform the ratio test for each descriptor in descriptors1
     for i in range(best_distance.shape[0]):
