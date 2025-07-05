@@ -14,8 +14,8 @@ from skimage.transform import resize
 """
 
 def display_keypoints(matches, dst_img, src_img):
-   dst = matches[0]
-   src = matches[1]
+   dst = matches[:,0]
+   src = matches[:,1]
 
    fig = plt.figure(figsize=(8, 4))
    ax1 = fig.add_subplot(121)
@@ -59,14 +59,15 @@ def sift_keypoints(img):
 
 # Setting up the image to gray for SIFT processing
 def setup_Image(img):
-   img_rgb = rgba2rgb(img)
-   img_gray = rgb2gray(img_rgb)
+   if img.shape[2] == 4:
+       img = rgba2rgb(img)
+   img_gray = rgb2gray(img)
    return img_gray
 
 if __name__ == "__main__":
     # Convert images to array
-    dst_img = np.asarray(Image.open('destination.png'))
-    src_img = np.asarray(Image.open('source.png'))
+    dst_img = np.asarray(Image.open('destination.jpg'))
+    src_img = np.asarray(Image.open('source.jpg'))
 
     # Convert images to grayscale
     dst_gray = setup_Image(dst_img)
