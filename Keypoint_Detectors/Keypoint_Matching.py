@@ -2,8 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PIL.Image as Image
 from matplotlib.patches import ConnectionPatch
-from scipy.spatial.distance import \
-    cdist  # used for calculating distances between keypoints
+from scipy.spatial.distance import cdist
 from skimage.color import rgb2gray, rgba2rgb
 from skimage.feature import SIFT
 from skimage.transform import resize
