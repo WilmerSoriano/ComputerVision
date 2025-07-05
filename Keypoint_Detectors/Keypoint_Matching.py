@@ -2,32 +2,33 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PIL.Image as Image
 from matplotlib.patches import ConnectionPatch
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist  # use this library instead of numpy to handle computation for distance (too much for numpy to handle I guess)
 from skimage.color import rgb2gray, rgba2rgb
 from skimage.feature import SIFT
 
 """
     Keypoint Matching using SIFT
-    This script demonstrates how to perform keypoint matching between two images using SIFT.
-    It detects keypoints in both images, computes their descriptors, and matches them.
-    The matched keypoints are then displayed on the images.
+    This script demonstrates my version of Match function to perform keypoint 
+    matching between two images using SIFT. It detects keypoints in both images, 
+    computes their descriptors, and matches them. The matched keypoints 
+    are then displayed on the images.
 """
 
-def display_keypoints(matches, keypoint1, keypoint2, dst_img, src_img):
+def display_keypoints(matches, keypoint1_dst, keypoint2_src, dst_img, src_img):
     fig = plt.figure(figsize=(8, 4))
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
     ax1.imshow(dst_img, cmap='gray')
     ax2.imshow(src_img, cmap='gray')
 
-    # NOTE: updated the way matches handles keypoints
+    # NOTE: updated the for-loop to use matches which handles keypoints
     for i,j in matches:
-        coordB = [keypoint1[i, 1], keypoint1[i, 0]]
-        coordA = [keypoint2[j, 1], keypoint2[j, 0]]
+        coordB = [keypoint1_dst[i, 1], keypoint1_dst[i, 0]]
+        coordA = [keypoint2_src[j, 1], keypoint2_src[j, 0]]
         con = ConnectionPatch(xyA=coordA, xyB=coordB, coordsA="data", coordsB="data",axesA=ax2, axesB=ax1, color="red")
         ax2.add_artist(con)
-        ax1.plot(keypoint1[i, 1], keypoint1[i, 0], 'ro')
-        ax2.plot(keypoint2[j, 1], keypoint2[j, 0], 'ro')
+        ax1.plot(keypoint1_dst[i, 1], keypoint1_dst[i, 0], 'ro')
+        ax2.plot(keypoint2_src[j, 1], keypoint2_src[j, 0], 'ro')
 
 # Function to match keypoints based on their descriptors
 # NOTE: The ratio test is important to determine the distance between keypoints.(distance < 0.75 * distance)
@@ -77,5 +78,5 @@ if __name__ == "__main__":
     # Match keypoints between the two images (main part of the code)
     matches = keypoint_match(descriptors1, descriptors2)
 
-    display_keypoints(matches,keypoints1,keypoints2, dst_gray, src_gray)
+    display_keypoints(matches, keypoints1, keypoints2, dst_gray, src_gray)
     plt.show()
