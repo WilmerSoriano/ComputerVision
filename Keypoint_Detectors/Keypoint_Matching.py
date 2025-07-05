@@ -31,18 +31,25 @@ def display_keypoints(matches, dst_img, src_img):
       ax1.plot(dst[i, 1], dst[i, 0], 'ro')
       ax2.plot(src[i, 1], src[i, 0], 'ro')
 
-def keypoint_match(descriptors1, descriptors2):
+# Function to match keypoints based on their descriptors
+# NOTE: The ratio test is important to determine the distance between keypoints.(distance < 0.75 * distance)
+def keypoint_match(descriptors_dst, descriptors_src):
+   ratio = 0.75
    matches = []
-   for i, desc1 in enumerate(descriptors1):
-       best_match = None
-       best_distance = float('inf')
-       for j, desc2 in enumerate(descriptors2):
-           distance = np.linalg.norm(desc1 - desc2)
-           if distance < best_distance:
-               best_distance = distance
-               best_match = j
-       if best_match is not None:
-           matches.append((i, best_match))
+   # Before we perform the ratio test, we need the minimum euclidean distance from nearest neighbors for best candidate match for each keypoint.
+   best_distance = np.linalg.norm(descriptors_dst[:, None] - descriptors_src, axis=2)
+
+   # Now we can perform the ratio test for each descriptor in descriptors1
+   for i in range(best_distance.shape[0]):
+      j = np.argsort(best_distance[i])
+      """ 
+            Check if the best match is significantly better than the second best match,
+            If the distance of the best match is less than 0.75 times the distance of the 
+            second best match, we consider it a match.
+      """
+      if best_distance[i, j[0]] < ratio * best_distance[i, j[1]]:
+         matches.append((i, j[0]))  
+
    return matches
 
 def sift_keypoints(img):
@@ -68,7 +75,8 @@ if __name__ == "__main__":
     keypoints1, descriptors1 = sift_keypoints(dst_gray)
     keypoints2, descriptors2 = sift_keypoints(src_gray)
 
+    # Match keypoints between the two images (main part of the code)
     matches = keypoint_match(descriptors1, descriptors2)
 
-    display_keypoints(matches, gray1, gray2)
+    display_keypoints(matches, dst_gray, src_gray)
     plt.show()
