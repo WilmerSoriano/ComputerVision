@@ -5,7 +5,6 @@ from matplotlib.patches import ConnectionPatch
 from scipy.spatial.distance import cdist
 from skimage.color import rgb2gray, rgba2rgb
 from skimage.feature import SIFT
-from skimage.transform import resize
 
 """
     Keypoint Matching using SIFT
