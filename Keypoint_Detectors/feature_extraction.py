@@ -13,11 +13,14 @@ def create_histograms(features, kmeans):
     image_histograms = []
 
     for feature in tqdm(features, desc="Building histograms"):
-        clusters = kmeans.predict(feature)
+        clusters = kmeans.predict(feature) if feature.size else []
         histogram, _ = np.histogram(clusters, bins=vocab_size, range=(0, vocab_size))
         image_histograms.append(histogram)
 
-    return np.array(image_histograms)
+    # Another padding issue, if no valid histograms were created, return a zero array
+    if len(image_histograms) == 0:
+        return np.zeros((len(features), 100), dtype=int)
+    return np.stack(image_histograms, axis=0)
 
 def descriptors(images):
     sift = SIFT()
