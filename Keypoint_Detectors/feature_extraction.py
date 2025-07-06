@@ -13,8 +13,8 @@ def sift_features(images, labels):
     y_features = []
 
     for img, label in tqdm(zip(images, labels),  desc="Processing images"):
-        img = img.reshape(3, 32, 32).transpose(1,2,0)
-        img_gray = rgb2gray(img)
+        rgb = img.reshape(3, 32, 32).transpose(1,2,0)
+        img_gray = rgb2gray(rgb)
 
         sift.detect_and_extract(img_gray)
         features.append(sift.descriptors)
@@ -34,11 +34,12 @@ def sift_features(images, labels):
 
     return np.array(image_histograms)
 
-
 def hog_features(images):
     features = []  
     for img in tqdm(images, desc="Processing images"):
-        gray_img = color.rgb2gray(img)
+        rgb = img.reshape(3,32,32).transpose(1,2,0)
+        gray_img = color.rgb2gray(rgb)
+        
         hog_features = hog(gray_img, pixels_per_cell=(8, 8), cells_per_block=(2, 2), visualize=False)
         features.append(hog_features)
     return np.array(features)
