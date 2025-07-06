@@ -10,25 +10,22 @@ from tqdm import tqdm  # Used as progress bar
 # TODO: Create feature processing functions for SIFT and HOG
 def create_histograms(features, kmeans):
     vocab_size = 100
-    image_histograms = []
+    img_histograms = []
 
     for feature in tqdm(features, desc="Building histograms"):
-        clusters = kmeans.predict(feature) if feature.size else []
-        histogram, _ = np.histogram(clusters, bins=vocab_size, range=(0, vocab_size))
-        image_histograms.append(histogram)
+        if len(feature) > 0:
+            clusters = kmeans.predict(feature)
+            histogram = np.bincount(clusters, minlength=vocab_size)
+            img_histograms.append(histogram)
+        else:
+            img_histograms.append(np.zeros(vocab_size)) # <= Update: Handle images with no features
+    return np.array(img_histograms)
 
-    # Another padding issue, if no valid histograms were created, return a zero array
-    if len(image_histograms) == 0:
-        return np.zeros((len(features), 100), dtype=int)
-    return np.stack(image_histograms, axis=0)
-
-def descriptors(images):
+def extract_descriptors(images):
     sift = SIFT()
     descriptors_list = []
-    valid_id = []
     
-    # I modified the loop to also return the valid indices per image.
-    for id, img in enumerate(tqdm(images, desc="Extracting SIFT descriptors")):
+    for img in tqdm(images, desc="Extracting SIFT descriptors"):
         rgb = img.reshape(3, 32, 32).transpose(1, 2, 0)
         img_gray = rgb2gray(rgb)
         
@@ -36,41 +33,29 @@ def descriptors(images):
             sift.detect_and_extract(img_gray)
             if sift.descriptors is not None and len(sift.descriptors) > 0:
                 descriptors_list.append(sift.descriptors)
-                valid_id.append(id)
+            else:
+                descriptors_list.append(np.array([]))  # <= Update: Empty array for no features
         except:
-            pass
-            
-    return descriptors_list, valid_id
-
-# NOTE: both train and test should be in one Kmeans.
-def sift_features(X_train, X_test):
-    # ==== Extracting Visual Features ====
-    train_feature, train_id = descriptors(X_train)
-    test_features, test_id = descriptors(X_test)
-
-    # ==== Building a Vocabulary ====
-    sift_features_np = np.concatenate(train_feature)
-    kmeans = KMeans(n_clusters=100, random_state=42)
-    kmeans.fit(sift_features_np)
-
-    # ==== Creating Histograms (for both train and test using the same Kmeans) ====
-    X_train_hist = create_histograms(train_feature, kmeans) 
-    X_test_hist = create_histograms(test_features, kmeans)
-
-    # Fixing padding issues
-    full_X_train = np.zeros((len(X_train), 100), dtype=int)
-    full_X_test  = np.zeros((len(X_test), 100), dtype=int)
-
-    full_X_train[train_id] = X_train_hist
-    full_X_test[test_id]   = X_test_hist
-
-    # ==== Adjusting Frequency Vectors ====
-    tfidf = TfidfTransformer()
-    tfidf.fit(full_X_train)
-    X_train_tfidf = tfidf.transform(full_X_train)
-    X_test_tfidf = tfidf.transform(full_X_test)
+            descriptors_list.append(np.array([]))
     
-    return X_train_tfidf.toarray(), X_test_tfidf.toarray()
+    return descriptors_list
+
+def sift_features(X_train, X_test):
+    # =========== Extract SIFT descriptors ============
+    train_descriptors = extract_descriptors(X_train)
+    test_descriptors = extract_descriptors(X_test)
+
+    # =========== Build vocabulary ============
+    train_descriptors_concat = np.concatenate([d for d in train_descriptors if len(d) > 0]) # <= Update: Filter out empty descriptors
+    vocab_size = 100
+    kmeans = KMeans(n_clusters=vocab_size, random_state=42)
+    kmeans.fit(train_descriptors_concat)
+    
+    # =========== Create histograms ===========
+    X_train_hist = create_histograms(train_descriptors, kmeans)
+    X_test_hist = create_histograms(test_descriptors, kmeans)
+
+    return X_train_hist, X_test_hist
 
 def hog_features(images):
     features = []  
@@ -96,6 +81,10 @@ if __name__ == "__main__":
 
     # TODO: Extract features from the testing data
     sift_train, sift_test = sift_features(X_train, X_test)
+    transformer = TfidfTransformer()
+    transformer.fit(sift_train)
+    X_train_tfidf = transformer.transform(sift_train).toarray()
+    X_test_tfidf  = transformer.transform(sift_test).toarray()
 
     hog_features_train = hog_features(X_train)
     hog_features_test = hog_features(X_test)
