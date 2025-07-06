@@ -54,15 +54,19 @@ def sift_features(X_train, X_test):
     X_train_hist = create_histograms(train_feature, kmeans) 
     X_test_hist = create_histograms(test_features, kmeans)
 
+    # Fixing padding issues
+    full_X_train = np.zeros((len(X_train), 100), dtype=int)
+    full_X_test  = np.zeros((len(X_test), 100), dtype=int)
+
+    full_X_train[train_id] = X_train_hist
+    full_X_test[test_id]   = X_test_hist
+
     # ==== Adjusting Frequency Vectors ====
     tfidf = TfidfTransformer()
-
-    tfidf.fit(X_train_hist)
-    tfidf.fit(X_test_hist)
-
-    X_train_tfidf = tfidf.transform(X_train_hist)
-    X_test_tfidf = tfidf.transform(X_test_hist)
-
+    tfidf.fit(full_X_train)
+    X_train_tfidf = tfidf.transform(full_X_train)
+    X_test_tfidf = tfidf.transform(full_X_test)
+    
     return X_train_tfidf.toarray(), X_test_tfidf.toarray()
 
 def hog_features(images):
