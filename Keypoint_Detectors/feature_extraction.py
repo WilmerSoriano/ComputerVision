@@ -7,39 +7,17 @@ from tqdm import tqdm  # Used as progress bar
 
 
 # TODO: Create feature processing functions for SIFT and HOG
-def sift_features(images, labels):
+def sift_features(train_img, train_label):
     sift = SIFT()
     features = []
     y_features = []
 
-    for img, label in tqdm(zip(images, labels),  desc="Processing images"):
-        rgb = img.reshape(3, 32, 32).transpose(1,2,0)
-        img_gray = rgb2gray(rgb)
-
-        sift.detect_and_extract(img_gray)
-        features.append(sift.descriptors)
-        y_features.append(label)
-    # ======================Building Vocabulary===============================
-    sift_features_np = np.concatenate(features)
-    vocab_size = 100
-    kmeans = KMeans(n_clusters=vocab_size, random_state=42)
-    kmeans.fit(sift_features_np)
-    # ======================Building Histograms================================
-    image_histograms = []
-
-    for feature in tqdm(features, desc="Building histograms"):
-        clusters = kmeans.predict(feature)
-        histogram, _ = np.histogram(clusters, bins=vocab_size, range=(0, vocab_size))
-        image_histograms.append(histogram)
-
-    return np.array(image_histograms)
-
 def hog_features(images):
     features = []  
-    for img in tqdm(images, desc="Processing images"):
+    for img in tqdm(images, desc="HOG feature extraction"):
         rgb = img.reshape(3,32,32).transpose(1,2,0)
         gray_img = color.rgb2gray(rgb)
-        
+
         hog_features = hog(gray_img, pixels_per_cell=(8, 8), cells_per_block=(2, 2), visualize=False)
         features.append(hog_features)
     return np.array(features)
@@ -65,11 +43,13 @@ if __name__ == "__main__":
 
     # TODO: Save the extracted features to a file
     np.savez("HOG_cifar10_features.npz",
-    hog_features_train=hog_features_train,
-    hog_features_test=hog_features_test,
+    X_train=hog_features_train,
+    X_test=hog_features_test,
     y_train=y_train,
     y_test=y_test)
 
     np.savez("SIFT_cifar10_features.npz",
-    sift_features_train=sift_features_train,
-    sift_features_test=sift_features_test)
+    X_train=sift_features_train,
+    X_test=sift_features_test,
+    y_train=y_train,
+    y_test=y_test)
