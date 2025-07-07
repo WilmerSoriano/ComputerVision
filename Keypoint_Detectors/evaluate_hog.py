@@ -5,9 +5,9 @@ from sklearn.svm import LinearSVC
 # ================Data extraction====================
 data = np.load("HOG_cifar10_features.npz", allow_pickle=True)
 X_train = data["X_train"]
-y_train = data["y_train"].astype(int)
+y_train = data["y_train"]
 X_test = data["X_test"]
-y_test = data["y_test"].astype(int)
+y_test = data["y_test"]
 
 # Create an SVM model
 svm = LinearSVC(random_state=42)
