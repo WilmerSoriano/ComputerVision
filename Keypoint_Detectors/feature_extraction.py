@@ -1,5 +1,4 @@
 import numpy as np
-from skimage import color
 from skimage.color import rgb2gray
 from skimage.feature import SIFT, hog
 from sklearn.cluster import KMeans
@@ -104,15 +103,20 @@ if __name__ == "__main__":
     hog_features_test = hog_features(X_test)
 
     # TODO: Save the extracted features to a file
-    np.savez("HOG_cifar10_features.npz",
-             X_train=hog_features_train,
-             X_test=hog_features_test,
-             y_train=y_train,
-             y_test=y_test)
+    hog_data = {
+        "X_train": hog_features_train,
+        "X_test": hog_features_test,
+        "y_train": y_train,
+        "y_test": y_test
+    }
+    np.savez("HOG_cifar10.npz", **hog_data)
 
-    np.savez("SIFT_cifar10_features.npz",
-             X_train=X_train_tfidf,
-             X_test=X_test_tfidf,
-             y_train=y_train,
-             y_test=y_test)
+    # Save SIFT features
+    sift_data = {
+        "X_train": X_train_tfidf,
+        "X_test": X_test_tfidf,
+        "y_train": y_train,
+        "y_test": y_test
+    }
+    np.savez("SIFT_cifar10.npz", **sift_data)
     

@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.svm import LinearSVC
 
 # ================Data extraction====================
-data = np.load("HOG_cifar10_features.npz", allow_pickle=True)
+data = np.load("HOG_cifar10.npz", allow_pickle=True)
 X_train = data["X_train"]
 y_train = data["y_train"]
 X_test = data["X_test"]
