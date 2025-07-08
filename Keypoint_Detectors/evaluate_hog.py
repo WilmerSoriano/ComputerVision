@@ -17,4 +17,4 @@ svm.fit(X_train, y_train)
 
 # Evaluate the model
 accuracy = svm.score(X_test, y_test)
-print(f'SVM accuracy: {accuracy:.2f}')
+print(f'HOG: SVM accuracy: {accuracy:.2f}')
