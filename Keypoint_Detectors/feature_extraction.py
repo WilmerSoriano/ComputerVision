@@ -43,11 +43,18 @@ def sift_features(X_train, X_test):
     test_descriptors = extract_descriptors(X_test)
 
     # ======== Build vocabulary ========
-    print("Building vocabulary from training descriptors... may take a while...6 minutes")
-
     non_empty_train = [d for d in train_descriptors if len(d) > 0] # <= Filter out empty descriptors
     if len(non_empty_train) == 0:
         raise ValueError("No SIFT descriptors found in training set")
+    
+    # The number of features extracted using each approach
+    counts = [d.shape[0] for d in train_descriptors]
+    mean_kp = np.mean(counts)
+    std_kp  = np.std(counts)
+    print(f"\nSIFT: keypoints per image: {mean_kp:.1f} ± {std_kp:.1f}")
+    print(f"SIFT: per-image descriptors "f"min {min(counts)}, max {max(counts)}, "f"mean {np.mean(counts):.1f} ± {np.std(counts):.1f}\n")
+
+    print("Building vocabulary from training descriptors... may take a while...6 minutes\n")
     
     train_descriptors_concat = np.concatenate(non_empty_train)
 
@@ -58,6 +65,7 @@ def sift_features(X_train, X_test):
     # ======== Create histograms ========
     X_train_hist = create_histograms(train_descriptors, kmeans, vocab_size)
     X_test_hist = create_histograms(test_descriptors, kmeans, vocab_size)
+    print("\n")
 
     return X_train_hist, X_test_hist
 
@@ -101,6 +109,9 @@ if __name__ == "__main__":
 
     hog_features_train = hog_features(X_train)
     hog_features_test = hog_features(X_test)
+
+    print(f"\nHOG: features {hog_features_train.shape[0]} images * {hog_features_train.shape[1]} dim vectors, 1 per image")
+    print(f"HOG: 1 histogram per image of length {hog_features_train.shape[1]}\n")
 
     # TODO: Save the extracted features to a file
     hog_data = {

@@ -77,6 +77,7 @@ if __name__ == "__main__":
 
     # Match keypoints between the two images (main part of the code)
     matches = keypoint_match(descriptors1, descriptors2)
+    print(f"\nTotal correct matches: {len(matches)}")
 
     display_keypoints(matches, keypoints1, keypoints2, dst_gray, src_gray)
     plt.show()
