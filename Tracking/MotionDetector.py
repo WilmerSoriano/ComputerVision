@@ -6,13 +6,13 @@ from skimage.morphology import dilation
 from skimage.measure import label, regionprops
 
 """
-    a - Frame hysteresis for determining active or inactive objects.
+    activity - Frame hysteresis for determining active or inactive objects.
 
-    T - The motion threshold for filtering out noise.
+    threshold - The motion threshold for filtering out noise.
 
-    d - A distance threshold to determine if an object candidate belongs to an object currently being tracked.
+    dis - A distance threshold to determine if an object candidate belongs to an object currently being tracked.
 
-    s - The number of frames to skip between detections. The tracker will still work well even if it is not updated every frame.
+    fskip - The number of frames to skip between detections. The tracker will still work well even if it is not updated every frame.
 
     N - The maximum number of objects to track.
 """
