@@ -146,7 +146,7 @@ class MotionDetector:
         for obj in self.tracked:
             # Predict object position
             obj['kf'].predict()
-            predicted_pos = obj['kf'].position[:2]
+            predicted_pos = obj['kf'].x[:2]
             
             best_candidate = None
             min_dist = float('inf')
@@ -179,6 +179,6 @@ class MotionDetector:
         active_object = []
 
         for obj in self.tracked:
-            object_data = {'id': obj['id'],'centroid': obj['kf'].position[:2],'history': obj['history']}
+            object_data = {'id': obj['id'],'centroid': obj['kf'].x[:2],'history': obj['history']}
             active_object.append(object_data)
         return active_object
