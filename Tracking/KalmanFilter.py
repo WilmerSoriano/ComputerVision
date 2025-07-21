@@ -20,7 +20,7 @@ class KalmanFilter:
         return self.x
         
     def update(self, y):
-        y = np.array(y) # 
+        y = np.array(y)
         
         z = y - np.dot(self.H, self.x)
         
@@ -35,7 +35,3 @@ class KalmanFilter:
         self.P = np.dot(I - np.dot(K, self.H), self.P)
         
         return self.x
-    
-    @property
-    def position(self):
-        return self.x[:2] # only used to find the esimated position
