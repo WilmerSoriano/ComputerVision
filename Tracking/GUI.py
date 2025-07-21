@@ -7,7 +7,7 @@ import numpy
 numpy.float = numpy.float64
 numpy.int = numpy.int_
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QSlider, QPushButton, QWidget, QHBoxLayout, QVBoxLayout, QProgressDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QSlider, QPushButton, QWidget, QHBoxLayout, QVBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage, QPixmap, QPainter, QColor, QPen
 
@@ -33,7 +33,7 @@ class GUI(QMainWindow):
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(self.total_frames - 1)
-        self.slider.valueChanged.connect(self.on_slider_change)
+        self.slider.valueChanged.connect(self.slider)
         
         # Skipping 60 frames forward or backward function
         self.btn_back60 = QPushButton("<< 60")
@@ -60,7 +60,7 @@ class GUI(QMainWindow):
     def precompute_tracking(self):
 
         print("\nPlease wait 3 min ... \nPreprocessing tracking data... \n\n(IGNORE ANY ERROR BELOW)\n")
-        tracker = MotionDetector(activity=5, threshold=0.05, dis=30, fskip=1, N=10, kf_params={'dt':1.0, 'accel_var':1.0, 'meas_var':1.0})
+        tracker = MotionDetector(activity=5, threshold=0.05, dis=30, fskip=1, N=10, kf_param={'dt':1.0, 'accel_var':1.0, 'meas_var':1.0})
         
         tracking_data = []
         for i in range(self.total_frames):
@@ -70,7 +70,7 @@ class GUI(QMainWindow):
 
         return tracking_data
     
-    def on_slider_change(self, value):
+    def slider(self, value):
         self.render_frame(value)
     
     def jump_frames(self, offset):
@@ -101,14 +101,26 @@ class GUI(QMainWindow):
         scale_x = scaled_pix.width() / pix.width()
         scale_y = scaled_pix.height() / pix.height()
         
-        # Draw trails
         for obj in objs:
             history = obj['history']
             if history:
+                # Convert history points to display coordinates
                 # NOTE centroid is (row, col) = (y, x)
-                pts = [(int(p[1] * scale_x), int(p[0] * scale_y)) for p in history]
-                for i in range(1, len(pts)):
-                    painter.drawLine(pts[i-1][0], pts[i-1][1], pts[i][0], pts[i][1])
+                pts = []
+                for p in history:
+                    # Convert to (x, y) = (col, row)
+                    x = p[1] * scale_x
+                    y = p[0] * scale_y
+                    pts.append((int(x), int(y)))
+                
+                # Only draw the trail if we have at least 2 points
+                if len(pts) > 1:
+                    pen = QPen(QColor('red'))
+                    painter.setPen(pen)
+                    
+                    # Draw lines connecting consecutive points, This is the best I can do for line tracing.
+                    for i in range(1, len(pts)):
+                        painter.drawLine(pts[i-1][0], pts[i-1][1], pts[i][0], pts[i][1])
         
         # Draw current centroids
         for obj in objs:
@@ -119,6 +131,7 @@ class GUI(QMainWindow):
             painter.drawEllipse(int(x)-5, int(y)-5, 10, 10)
         
         painter.end()
+        
         self.video_label.setPixmap(scaled_pix)
         self.current_frame = frame_idx
 
