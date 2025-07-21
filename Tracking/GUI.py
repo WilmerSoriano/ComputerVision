@@ -33,7 +33,7 @@ class GUI(QMainWindow):
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(self.total_frames - 1)
-        self.slider.valueChanged.connect(self.slider)
+        self.slider.valueChanged.connect(self.on_slider)
         
         # Skipping 60 frames forward or backward function
         self.btn_back60 = QPushButton("<< 60")
@@ -70,7 +70,7 @@ class GUI(QMainWindow):
 
         return tracking_data
     
-    def slider(self, value):
+    def on_slider(self, value):
         self.render_frame(value)
     
     def jump_frames(self, offset):
