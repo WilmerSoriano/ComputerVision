@@ -19,13 +19,14 @@ from KalmanFilter import KalmanFilter
 """
 
 class MotionDetector:
-    def __init__(self, activity=5, threshold=0.05, dis=30, fskip=1, N=10, kf_params=None):
+    def __init__(self, activity=5, threshold=0.05, dis=30, fskip=1, N=10, kf_param=None):
         self.activity = activity
         self.threshold = threshold
         self.dis = dis
         self.fskip = fskip
         self.N = N
-        self.kf_params = kf_params or {'dt': 1.0, 'accel_var': 1.0, 'meas_var': 1.0}
+
+        self.kf_param = kf_param or {'frame_t': 1.0, 'accel': 1.0, 'meas': 1.0} # back up Kalman Filter parameter
         
         self.frame_buffer = []
         self.proposals = []
@@ -37,6 +38,7 @@ class MotionDetector:
         gray = rgb2gray(frame)
         self.frame_buffer.append(gray)
         
+        # Checks if the frame is within the range of 3 frames from start to end
         if len(self.frame_buffer) > 3:
             self.frame_buffer.pop(0)
         if len(self.frame_buffer) < 3:
@@ -48,9 +50,9 @@ class MotionDetector:
         if self.frame_count % self.fskip != 0:
             for obj in self.tracked:
                 obj['kf'].predict()
-            return self._output_objects()
+            return self.tracked_objects()
         
-        # Compute motion mask
+        # Calculation the difference of frames
         f2, f1, f0 = self.frame_buffer
         diff1 = np.abs(f0 - f1)
         diff2 = np.abs(f1 - f2)
@@ -63,105 +65,88 @@ class MotionDetector:
         lbl = label(dil)
         regions = regionprops(lbl)
         
-        # Create candidates with proper coordinate format
+        # Create possible candidates with proper coordinate 
         candidates = []
         for r in regions:
             if r.area > 50:
-                # Keep centroid as (row, col) as in original
+                # find the centroid (average position from row and column) 
                 centroid = r.centroid
                 candidates.append({'centroid': centroid, 'bbox': r.bbox})
         
-        # Update tracking state
-        self._update_proposals(candidates)
-        self._confirm_proposals()
-        self._update_tracked(candidates)
-        self._prune_tracked()
+        self.update_proposal(candidates)
+        self.confirm_proposal()
+        self.update_tracker(candidates)
+        self.remove_tracker()
         
-        return self._output_objects()
+        return self.tracked_objects()
 
-    def _update_proposals(self, candidates):
-        used = set()
-        for cand in candidates:
+    def update_proposal(self, candidates):
+        valid = set()
+
+        for cand in candidates: # 1st loop, option each candidate centroid 
             c = np.array(cand['centroid'])
-            best_idx = None
+            best_id = None
             min_dist = float('inf')
             
-            for i, p in enumerate(self.proposals):
+            for id, p in enumerate(self.proposals): # 2nd loop, match the candidate to a possible proposal
                 dist = np.linalg.norm(c - p['centroid'])
                 if dist < min_dist and dist < self.dis:
                     min_dist = dist
-                    best_idx = i
+                    best_id = id
                     
-            if best_idx is not None:
-                self.proposals[best_idx]['centroid'] = c
-                self.proposals[best_idx]['age'] += 1
-                used.add(best_idx)
+            if best_id is not None: # Finally update the best candidate proposal
+                self.proposals[best_id]['centroid'] = c
+                self.proposals[best_id]['age'] += 1
+                valid.add(best_id)
             else:
                 self.proposals.append({'centroid': c, 'age': 1})
         
-        # Remove old proposals
+        # Remove old proposals, not needed anymore.
         self.proposals = [p for p in self.proposals if p['age'] < self.activity * 2]
 
-    def _confirm_proposals(self):
+    def confirm_proposal(self):
         i = 0
-        while i < len(self.proposals):
+        while i < len(self.proposals): # If the object is making noises for a while then accept the proposal, promote to track!
             p = self.proposals[i]
+
             if p['age'] >= self.activity and len(self.tracked) < self.N:
-                kf = self._create_kalman_filter(p['centroid'])
+
+                kf = self.setup_KF(p['centroid'])
                 self.tracked.append({'id': self.next_id, 'kf': kf, 'missed': 0, 'history': [np.array(p['centroid'])]})
                 self.next_id += 1
-                del self.proposals[i]
+                del self.proposals[i] # Remove the proposal from the list since they are now being tracked
             else:
                 i += 1
 
-    def _create_kalman_filter(self, centroid):
-        """Create Kalman filter matching original implementation"""
-        dt = self.kf_params.get('dt', 1.0)
-        accel_var = self.kf_params.get('accel_var', 1.0)
-        meas_var = self.kf_params.get('meas_var', 1.0)
+    def setup_KF(self, centroid):
+        frame_t = self.kf_param.get('frame_t', 1.0)
+        accel = self.kf_param.get('accel', 1.0)
+        meas = self.kf_param.get('meas', 1.0)
         
-        # State transition matrix
-        F = np.array([
-            [1, 0, dt, 0],
-            [0, 1, 0, dt],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ])
+        F = np.array([[1, 0, frame_t, 0], [0, 1, 0, frame_t], [0, 0, 1, 0], [0, 0, 0, 1]])
         
-        # Control matrix (not used)
         B = np.zeros((4, 1))
         
-        # Measurement matrix
-        H = np.array([
-            [1, 0, 0, 0],
-            [0, 1, 0, 0]
-        ])
+        H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
         
-        # Process noise covariance (match original calculation)
-        G = np.array([
-            [dt**2/2, 0],
-            [0, dt**2/2],
-            [dt, 0],
-            [0, dt]
-        ])
-        Q = G @ G.T * accel_var
+        # FIX Remember we need position and velocity at each frame per time 
+        G = np.array([[frame_t**2/2, 0],[0, frame_t**2/2],[frame_t, 0],[0, frame_t]])
         
-        # Measurement noise covariance
-        R = np.eye(2) * meas_var
+        Q = np.linalg.multi_dot([G, G.T]) * accel 
         
-        # Initial state: [row, col, v_row, v_col] (as in original)
+        R = np.eye(2) * meas
+        
         x0 = np.array([centroid[0], centroid[1], 0., 0.], dtype=float)
         
-        # Initial covariance (match original value)
         P0 = np.eye(4) * 500.
         
         return KalmanFilter(F, B, H, Q, R, x0, P0)
 
-    def _update_tracked(self, candidates):
+    def update_tracker(self, candidates):
         for obj in self.tracked:
             # Predict object position
             obj['kf'].predict()
-            predicted_pos = obj['kf'].position[:2]  # Use first two elements
+            predicted_pos = obj['kf'].position[:2]
             
             best_candidate = None
             min_dist = float('inf')
@@ -169,6 +154,7 @@ class MotionDetector:
             # Find closest candidate
             for cand in candidates:
                 dist = np.linalg.norm(predicted_pos - cand['centroid'])
+
                 if dist < min_dist and dist < self.dis:
                     min_dist = dist
                     best_candidate = cand
@@ -181,12 +167,18 @@ class MotionDetector:
             else:
                 obj['missed'] += 1
 
-    def _prune_tracked(self):
-        self.tracked = [o for o in self.tracked if o['missed'] < self.activity]
+    def remove_tracker(self):
+        active_objects = []
 
-    def _output_objects(self):
-        return [{
-            'id': o['id'], 
-            'centroid': o['kf'].position[:2],  # Return only position
-            'history': o['history']
-        } for o in self.tracked]
+        for obj in self.tracked:
+            if obj['missed'] < self.activity:
+                active_objects.append(obj)
+        self.tracked = active_objects
+
+    def tracked_objects(self): 
+        active_object = []
+
+        for obj in self.tracked:
+            object_data = {'id': obj['id'],'centroid': obj['kf'].position[:2],'history': obj['history']}
+            active_object.append(object_data)
+        return active_object
