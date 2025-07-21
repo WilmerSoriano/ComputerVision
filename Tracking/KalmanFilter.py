@@ -11,31 +11,26 @@ class KalmanFilter:
         self.x = x0  
         self.P = P0  
         
-    def predict(self, u=None):
-        if u is None:
-            u = np.zeros(self.B.shape[1])
-
+    def predict(self):
+        # 1st. predict next state
         self.x = np.dot(self.F, self.x)
-        self.P = np.dot(np.dot(self.F, self.P), self.F.T) + self.Q
-        
+        # 2nd. predict covariance
+        self.P = np.dot(np.dot(self.F, self.P), self.F.T) + self.Q 
+
         return self.x
         
-    def update(self, z):
-        z = np.array(z)
+    def update(self, y):
+        y = np.array(y) # 
         
-        # Compute innovation
-        y = z - np.dot(self.H, self.x)
+        z = y - np.dot(self.H, self.x)
         
-        # Compute innovation covariance
         S = np.dot(np.dot(self.H, self.P), self.H.T) + self.R
         
-        # Compute Kalman gain
         K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
         
-        # Update state estimate
-        self.x = self.x + np.dot(K, y)
+        self.x = self.x + np.dot(K, z)
         
-        # Update covariance (simplified form)
+        # Update covariance 
         I = np.eye(self.P.shape[0])
         self.P = np.dot(I - np.dot(K, self.H), self.P)
         
@@ -43,4 +38,4 @@ class KalmanFilter:
     
     @property
     def position(self):
-        return self.x[:2]
+        return self.x[:2] # only used to find the esimated position
